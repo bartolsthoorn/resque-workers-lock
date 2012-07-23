@@ -27,3 +27,18 @@ class Scraper
   end
 end
 ```
+
+## Requeue loop
+When a job is requeue'ed there is a small delay (1 second by default) before the worker places the job actually back in the queue. Let's say you have two jobs left, and one job is taking 15 seconds on the first worker and the other similar job is being blocked by the second worker. The second worker will continuously try to put the job back in the queue and it will try to process it again (racing for 15 seconds untill the other job has finished). This only happens when there are no other (not locked) jobs in the queue.
+
+To overwrite this delay in your class:
+``` ruby
+def self.requeue_perform_delay
+	5.0
+end
+```
+
+Please note that setting this value to 5 seconds will keep the worker idle for 5 seconds when the job is locked.
+
+## Possibilities to prevent the loop 
+Do a delayed resque (re)queue. However, this will have approximately the same results and will require a large extra chunk of code and rake configurations.

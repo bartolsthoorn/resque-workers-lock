@@ -11,7 +11,11 @@ Gem::Specification.new do |s|
   s.files             = %w( README.md Rakefile LICENSE )
   s.files            += Dir.glob("lib/**/*")
   s.files            += Dir.glob("test/**/*")
-
+  
+  s.add_dependency "resque"
+  s.add_development_dependency "turn"
+  s.add_development_dependency "rake"
+  
   s.description       = <<desc
 A Resque plugin. If you want to prevent specific jobs to be processed simultaneously, 
 extend it with this module. It locks on the first argument in the perform method.

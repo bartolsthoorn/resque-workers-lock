@@ -7,8 +7,14 @@ module Resque
           "lock:#{name}-#{args.to_s}"
         end
         
+        def requeue_perform_delay
+          1.0
+        end
+        
         def before_perform_lock(*args)
-          if Resque.redis.setnx(lock(*args), true)
+          nx = Resque.redis.setnx(lock(*args), true)
+          if nx == false
+            sleep(requeue_perform_delay)
             Resque.enqueue(self, *args)
             raise Resque::Job::DontPerform
           end
