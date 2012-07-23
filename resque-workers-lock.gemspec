@@ -3,7 +3,7 @@ Gem::Specification.new do |s|
   s.version           = "1.0.0"
   s.date              = Time.now.strftime('%Y-%m-%d')
   s.summary           = "Resque plugin, prevent specific jobs to be processed simultaneously by multiple workers."
-  s.homepage          = "http://github.com/defunkt/resque-lock"
+  s.homepage          = "http://github.com/bartolsthoorn/resque-lock"
   s.email             = "bartolsthoorn@gmail.com"
   s.authors           = [ "Bart Olsthoorn" ]
   s.has_rdoc          = false
@@ -18,11 +18,15 @@ extend it with this module. It locks on the first argument in the perform method
 
 For example:
 
-    class UpdateNetworkGraph
-      extend Resque::Workers::Lock
+    class Scraper
+      extend Resque::Plugins::Workers::Lock
+
+        def self.lock(domain)
+            return domain
+        end
 
       def self.perform(domain)
-        # Do HTTP request to domain
+        # do the work
       end
     end
 desc
