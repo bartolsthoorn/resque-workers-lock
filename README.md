@@ -1,6 +1,10 @@
 # Resque Workers Lock
 This is a [resque](https://github.com/defunkt/resque) plugin inspired by [resque-lock](https://github.com/defunkt/resque-lock) and requires Resque 1.7.0.
 
+``` ruby
+gem 'resque-workers-lock'
+```
+
 ## What does it do?
 If resque jobs have the same lock applied this means that those jobs cannot be processed simultaneously by two or more workers.
 
