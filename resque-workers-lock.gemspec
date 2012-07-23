@@ -17,21 +17,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency "rake"
   
   s.description       = <<desc
-A Resque plugin. If you want to prevent specific jobs to be processed simultaneously, 
-extend it with this module. It locks on the first argument in the perform method.
-
-For example:
-
-    class Scraper
-      extend Resque::Plugins::Workers::Lock
-
-        def self.lock(domain)
-            return domain
-        end
-
-      def self.perform(domain)
-        # do the work
-      end
-    end
+A Resque plugin. Two or more jobs with the same lock cannot be processed simultaneously by two or more workers. 
+When this situation occurs the second job gets pushed back to the queue.
 desc
 end

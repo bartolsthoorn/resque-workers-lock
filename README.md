@@ -6,7 +6,7 @@ gem 'resque-workers-lock'
 ```
 
 ## What does it do?
-If resque jobs have the same lock applied this means that those jobs cannot be processed simultaneously by two or more workers.
+If resque jobs have the same lock applied this means that those jobs cannot be processed simultaneously by two or more workers. When this situation occurs the second job gets pushed back to the queue.
 
 ## What is the default lock?
 By default the lock is the instance name + arguments (just like the classic resque-lock). Override this lock to lock on specific arguments.
