@@ -7,22 +7,18 @@ module Resque
           "lock:#{name}-#{args.to_s}"
         end
         
-        def before_perform_with_lock(*args)
-          nx = Resque.redis.setnx(lock(*args), true)
-          raise Resque::Failure, "worker locked" unless nx
-        end
-        
-        def on_failure_retry(e, *args)
-          Logger.info "Performing #{self} caused an exception (#{e}). Retrying..."
-          Resque.enqueue self, *args
+        def before_perform_lock(*args)
+          if Resque.redis.setnx(lock(*args), true)
+            Resque.enqueue(self, *args)
+            raise Resque::Job::DontPerform
+          end
         end
       
         def around_perform_lock(*args)
           begin
             yield
           ensure
-            # Always clear the lock when we're done, even if there is an
-            # error.
+            # Clear the lock. (even with errors)
             Resque.redis.del(lock(*args))
           end
         end
