@@ -39,6 +39,7 @@ class LockTest < Test::Unit::TestCase
   end
   
   def test_lock
-    # TODO: test that two workers are not processing two jobs
+    # TODO: test that two workers are not processing two jobs with same locks
+    # This is pretty hard to do, contributors are welcome!
   end
 end
