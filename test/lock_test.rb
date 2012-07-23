@@ -32,9 +32,13 @@ class LockTest < Test::Unit::TestCase
     assert Resque::Plugin.respond_to?(:before_enqueue_hooks)
   end
 
-  def test_lock
+  def test_enqueue
     3.times { Resque.enqueue(Job) }
 
     assert_equal 3, Resque.redis.llen('queue:lock_test')
+  end
+  
+  def test_lock
+    # TODO: test that two workers are not processing two jobs
   end
 end
