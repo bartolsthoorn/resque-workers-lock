@@ -3,9 +3,9 @@ Gem::Specification.new do |s|
   s.version           = "1.0.0"
   s.date              = Time.now.strftime('%Y-%m-%d')
   s.summary           = "Resque plugin, prevent specific jobs to be processed simultaneously by multiple workers."
-  s.homepage          = "http://github.com/bartolsthoorn/resque-lock"
+  s.homepage          = "http://github.com/bartolsthoorn/resque-workers-lock"
   s.email             = "bartolsthoorn@gmail.com"
-  s.author            = "Bart Olsthoorn"
+  s.authors           = ["Bart Olsthoorn"]
   s.has_rdoc          = false
 
   s.files             = %w( README.md Rakefile LICENSE )
