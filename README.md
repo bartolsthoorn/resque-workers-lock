@@ -12,7 +12,7 @@ If resque jobs have the same lock applied this means that those jobs cannot be p
 By default the lock is the instance name + arguments (just like the classic resque-lock). Override this lock to lock on specific arguments.
 
 ## How does it differ from resque-lock?
-Resque-lock will not let you queue jobs when you locked them. Resque-workers-lock locks on a workers-level and will requeue the locked jobs. Resque workers lock will not prevent you to queue jobs. If a worker takes on a job that is already being processed by another worker it will put the job back up in the queue! Also, this plugin will still offer you the ability to lock at enqueue-level just like resque-lock does (see example).
+Resque-lock will not let you queue jobs when you locked them. Resque-workers-lock locks on a workers-level and will requeue the locked jobs. When the enqueue_lock is set to false, this plugin will not prevent you to queue jobs. If a worker takes on a job that is already being processed by another worker it will put the job back up in the queue! Also, this plugin will still offer you the ability to lock at enqueue-level just like resque-lock does (see example).
 
 ## Example
 This example shows how you can use the workers-lock to prevent two jobs with the same domain to be processed simultaneously.

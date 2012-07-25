@@ -20,7 +20,9 @@ module Resque
         
         def before_enqueue_lock(*args)
           if enqueue_lock(*args)
-            Resque.redis.setnx(enqueue_lock(*args), true)
+            return Resque.redis.setnx(enqueue_lock(*args), true)
+          else
+            return true
           end
         end
         
