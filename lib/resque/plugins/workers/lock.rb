@@ -29,6 +29,7 @@ module Resque
             nx = Resque.redis.setnx(workers_lock(*args), true)
             if nx == false
               sleep(requeue_perform_delay)
+              Resque.redis.del(enqueue_lock(*args))
               Resque.enqueue(self, *args)
               raise Resque::Job::DontPerform
             end
