@@ -19,14 +19,16 @@ This example shows how you can use the workers-lock to prevent two jobs with the
 ``` ruby
 require 'resque/plugins/workers/lock'
 
-class Scraper
+class Parser
   extend Resque::Plugins::Workers::Lock
 
-	def self.lock(domain)
+	# Lock method has the same arguments as the self.perform
+	def self.lock(domain, arg2, arg3)
 		return domain
 	end
 
-  def self.perform(domain)
+	# Perform method with some arguments
+  def self.perform(domain, arg2, arg3)
     # do the work
   end
 end
