@@ -16,7 +16,8 @@ class LockTest < Test::Unit::TestCase
 
   def setup
     Resque.redis.del('queue:lock_test')
-    Resque.redis.del(Job.lock)
+    Resque.redis.del(Job.workers_lock)
+    Resque.redis.del(Job.enqueue_lock)
   end
 
   def test_lint
@@ -35,7 +36,7 @@ class LockTest < Test::Unit::TestCase
   def test_enqueue
     3.times { Resque.enqueue(Job) }
 
-    assert_equal 3, Resque.redis.llen('queue:lock_test')
+    assert_equal 1, Resque.redis.llen('queue:lock_test')
   end
   
   def test_lock
