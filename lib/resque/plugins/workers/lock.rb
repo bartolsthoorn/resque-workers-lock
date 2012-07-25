@@ -29,7 +29,7 @@ module Resque
           end
         end
         
-        def on_failure_lock(*args)
+        def on_failure_lock(exception, *args)
           # Clear the lock on DirtyExit
           Resque.redis.del(lock(*args))
         end
