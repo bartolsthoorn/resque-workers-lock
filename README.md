@@ -23,12 +23,12 @@ class Parser
   extend Resque::Plugins::Workers::Lock
 
 	# Lock method has the same arguments as the self.perform
-	def self.workers_lock(domain, arg2, arg3)
+	def self.lock_workers(domain, arg2, arg3)
 		return domain
 	end
 	
 	# Turn off standard resque-lock functionality
-	def self.enqueue_lock(domain, arg2, arg3)
+	def self.lock_enqueue(domain, arg2, arg3)
 		false
 	end
 
