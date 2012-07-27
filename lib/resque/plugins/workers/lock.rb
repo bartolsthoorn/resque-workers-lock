@@ -42,6 +42,11 @@ module Resque
             end
           end
         end
+        
+        def after_dequeue_lock(*args)
+          # Clear the lock when dequeueed
+          Resque.redis.del(lock_enqueue(*args).to_s)
+        end
       
         def around_perform_lock(*args)
           begin
