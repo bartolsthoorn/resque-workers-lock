@@ -1,4 +1,13 @@
 module Resque
+  alias_method :orig_remove_queue, :remove_queue
+  
+  def remove_queue(queue)
+    Resque.redis.keys('enqueuelock:*').collect { |x| Resque.redis.del(x) }.count
+    Resque.redis.keys('workerslock:*').collect { |x| Resque.redis.del(x) }.count
+    
+    orig_remove_queue(queue)
+  end
+  
   module Plugins
     module Workers
       module Lock

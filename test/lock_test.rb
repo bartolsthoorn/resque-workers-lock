@@ -64,6 +64,12 @@ class LockTest < Test::Unit::TestCase
     end
     
     assert_equal 4, Resque.redis.llen('queue:lock_test')
+    
+    # Test for complete queue wipe
+    Resque.remove_queue(:lock_test)
+    
+    Resque.enqueue(SimilarJob)
+    assert_equal 1, Resque.redis.llen('queue:lock_test')
   end
   
   def test_zcleanup
