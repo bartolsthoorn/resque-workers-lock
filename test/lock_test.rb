@@ -18,9 +18,9 @@ class LockTest < Test::Unit::TestCase
     extend Resque::Plugins::Workers::Lock
     @queue = :lock_test
     
-    #def self.lock_enqueue(id)
-    #  return id.to_s
-    #end
+    def self.lock_enqueue(id)
+      return id.to_s
+    end
     
     def self.lock_workers(id)
       return id.to_s
@@ -59,7 +59,7 @@ class LockTest < Test::Unit::TestCase
     
     3.times do |i|
       Resque.enqueue(UniqueJob, (i+100).to_s)
-      #assert_equal i.to_s, UniqueJob.lock_enqueue(i.to_s)
+      assert_equal i.to_s, UniqueJob.lock_enqueue(i.to_s)
       assert_equal i.to_s, UniqueJob.lock_workers(i.to_s)
     end
     
