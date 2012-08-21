@@ -14,12 +14,20 @@ module Resque
         
         # Override in your job to control the queue lock key
         def lock_enqueue(*args)
-          "enqueuelock:#{name}-#{args.to_s}"
+          "#{name}-#{args.to_s}"
+        end
+        
+        def get_lock_enqueue(*args)
+          "enqueuelock:"+lock_enqueue(*args).to_s
         end
         
         # Override in your job to control the workers lock key.
         def lock_workers(*args)
-          "workerslock:#{name}-#{args.to_s}"
+          "#{name}-#{args.to_s}"
+        end
+        
+        def get_lock_workers(*args)
+          "workerslock:"+lock_workers(*args).to_s
         end
         
         # Override in your job to change the perform requeue delay
@@ -34,7 +42,7 @@ module Resque
           if lock_enqueue(*args) == false
             return true
           else
-            return Resque.redis.setnx(lock_enqueue(*args).to_s, true)
+            return Resque.redis.setnx(get_lock_enqueue(*args), true)
           end
         end
         
@@ -42,10 +50,10 @@ module Resque
         # If it raises Resque::Job::DontPerform, the job is aborted.
         def before_perform_lock(*args)
           if lock_workers(*args)
-            nx = Resque.redis.setnx(lock_workers(*args).to_s, true)
+            nx = Resque.redis.setnx(get_lock_workers(*args), true)
             if nx == false
               sleep(requeue_perform_delay)
-              Resque.redis.del(lock_enqueue(*args).to_s)
+              Resque.redis.del(get_lock_enqueue(*args))
               Resque.enqueue(self, *args)
               raise Resque::Job::DontPerform
             end
@@ -54,7 +62,7 @@ module Resque
         
         def after_dequeue_lock(*args)
           # Clear the lock when dequeueed
-          Resque.redis.del(lock_enqueue(*args).to_s)
+          Resque.redis.del(get_lock_enqueue(*args))
         end
       
         def around_perform_lock(*args)
@@ -62,15 +70,15 @@ module Resque
             yield
           ensure
             # Clear the lock. (even with errors)
-            Resque.redis.del(lock_workers(*args).to_s)
-            Resque.redis.del(lock_enqueue(*args).to_s)
+            Resque.redis.del(get_lock_workers(*args))
+            Resque.redis.del(get_lock_enqueue(*args))
           end
         end
         
         def on_failure_lock(exception, *args)
           # Clear the lock on DirtyExit
-          Resque.redis.del(lock_workers(*args).to_s)
-          Resque.redis.del(lock_enqueue(*args).to_s)
+          Resque.redis.del(get_lock_workers(*args))
+          Resque.redis.del(get_lock_enqueue(*args))
         end
         
       end

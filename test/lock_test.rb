@@ -19,11 +19,11 @@ class LockTest < Test::Unit::TestCase
     @queue = :lock_test
     
     def self.lock_enqueue(id)
-      return id.to_s
+      return id.to_s+"e"
     end
     
     def self.lock_workers(id)
-      return id.to_s
+      return id.to_s+"w"
     end
     
     def self.perform(id)
@@ -53,14 +53,14 @@ class LockTest < Test::Unit::TestCase
   def test_enqueue
     3.times { Resque.enqueue(SimilarJob) }
 
-    assert_equal "workerslock:LockTest::SimilarJob-[]", SimilarJob.lock_workers
-    assert_equal "enqueuelock:LockTest::SimilarJob-[]", SimilarJob.lock_enqueue
+    assert_equal "LockTest::SimilarJob-[]", SimilarJob.lock_workers
+    assert_equal "LockTest::SimilarJob-[]", SimilarJob.lock_enqueue
     assert_equal 1, Resque.redis.llen('queue:lock_test')
     
     3.times do |i|
-      Resque.enqueue(UniqueJob, (i+100).to_s)
-      assert_equal i.to_s, UniqueJob.lock_enqueue(i.to_s)
-      assert_equal i.to_s, UniqueJob.lock_workers(i.to_s)
+      Resque.enqueue(UniqueJob, i+100)
+      assert_equal i.to_s+"e", UniqueJob.lock_enqueue(i)
+      assert_equal i.to_s+"w", UniqueJob.lock_workers(i)
     end
     
     assert_equal 4, Resque.redis.llen('queue:lock_test')
@@ -73,13 +73,11 @@ class LockTest < Test::Unit::TestCase
   end
   
   def test_zcleanup
-    Resque.redis.del(SimilarJob.lock_workers)
-    Resque.redis.del(SimilarJob.lock_enqueue)
+    Resque.remove_queue(:lock_test)
     
-    3.times do |i|
-      Resque.redis.del(UniqueJob.lock_enqueue((i+100).to_s))
-    end
-    Resque.redis.del('queue:lock_test')
+    Resque.redis.keys('enqueuelock:*').collect { |x| Resque.redis.del(x) }.count
+    Resque.redis.keys('workerslock:*').collect { |x| Resque.redis.del(x) }.count
+    
     assert_equal 0, Resque.redis.llen('queue:lock_test')
   end
   
