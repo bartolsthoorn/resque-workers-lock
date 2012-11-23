@@ -10,19 +10,19 @@ class LockTest < Test::Unit::TestCase
       raise "Woah woah! How did this happen?"
     end
   end
-  
+
   class UniqueJob
     extend Resque::Plugins::Workers::Lock
     @queue = :lock_test
-    
+
     def self.lock_enqueue(id)
       return id.to_s+"e"
     end
-    
+
     def self.lock_workers(id)
       return id.to_s+"w"
     end
-    
+
     def self.perform(id)
       raise "Woah woah! How did this happen?"
     end
@@ -53,31 +53,31 @@ class LockTest < Test::Unit::TestCase
     assert_equal "LockTest::SimilarJob-[]", SimilarJob.lock_workers
     assert_equal "LockTest::SimilarJob-[]", SimilarJob.lock_enqueue
     assert_equal 1, Resque.redis.llen('queue:lock_test')
-    
+
     3.times do |i|
       Resque.enqueue(UniqueJob, i+100)
       assert_equal i.to_s+"e", UniqueJob.lock_enqueue(i)
       assert_equal i.to_s+"w", UniqueJob.lock_workers(i)
     end
-    
+
     assert_equal 4, Resque.redis.llen('queue:lock_test')
-    
+
     # Test for complete queue wipe
     Resque.remove_queue(:lock_test)
-    
+
     Resque.enqueue(SimilarJob)
     assert_equal 1, Resque.redis.llen('queue:lock_test')
   end
-  
+
   def test_zcleanup
     Resque.remove_queue(:lock_test)
-    
+
     Resque.redis.keys('enqueuelock:*').collect { |x| Resque.redis.del(x) }.count
     Resque.redis.keys('workerslock:*').collect { |x| Resque.redis.del(x) }.count
-    
+
     assert_equal 0, Resque.redis.llen('queue:lock_test')
   end
-  
+
   def test_lock
     # TODO: test that two workers are not processing two jobs with same locks
     # This is pretty hard to do, contributors are welcome!
