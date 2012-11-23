@@ -72,6 +72,7 @@ class LockTest < Test::Unit::TestCase
   end
 
   def test_lock
+    fail "This is the only important test"
     # TODO: test that two workers are not processing two jobs with same locks
     # This is pretty hard to do, contributors are welcome!
   end
