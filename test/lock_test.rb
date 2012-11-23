@@ -65,8 +65,8 @@ class LockTest < Test::Unit::TestCase
   def test_zcleanup
     Resque.remove_queue(:lock_test)
 
-    Resque.redis.keys('enqueuelock:*').collect { |x| Resque.redis.del(x) }.count
-    Resque.redis.keys('workerslock:*').collect { |x| Resque.redis.del(x) }.count
+    Resque.redis.keys('enqueuelock:*').collect { |x| Resque.redis.del(x) }
+    Resque.redis.keys('workerslock:*').collect { |x| Resque.redis.del(x) }
 
     assert_equal 0, Resque.redis.llen('queue:lock_test')
   end
