@@ -1,5 +1,4 @@
 require 'test/unit'
-require 'resque'
 require 'resque/plugins/workers/lock'
 
 $counter = 0

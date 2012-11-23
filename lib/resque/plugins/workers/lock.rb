@@ -1,3 +1,5 @@
+require 'resque'
+
 module Resque
   alias_method :orig_remove_queue, :remove_queue
   
