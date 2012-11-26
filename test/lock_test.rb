@@ -1,5 +1,6 @@
 require 'test/unit'
 require 'resque/plugins/workers/lock'
+require_relative 'lock_worker'
 
 class LockTest < Test::Unit::TestCase
   class SimilarJob
@@ -71,30 +72,9 @@ class LockTest < Test::Unit::TestCase
     assert_equal 0, Resque.redis.llen('queue:lock_test')
   end
 
-  # Sleep job, for testing that two workers are not processing two jobs with
-  # the same lock.
-  class SimilarSleepJob
-    extend Resque::Plugins::Workers::Lock
-    @queue = :lock_test_workers
-
-    def self.lock_enqueue(id)
-      false
-    end
-
-    def self.lock_workers(id)
-      return id.to_s
-    end
-
-    def self.perform(id)
-      File.open('test/test.txt', 'a') {|f| f.write('1') }
-      sleep(5)
-    end
-  end
-
   # To test this, make sure to run `TERM_CHILD=1 COUNT=2 VVERBOSE=1 QUEUES=* rake resque:work`
   def test_lock
     2.times { Resque.enqueue(SimilarSleepJob, 'writing_and_sleeping') }
-    SimilarSleepJob.perform('abc')
     
     # After 3 seconds only 1 job had the change of running
     sleep(3)

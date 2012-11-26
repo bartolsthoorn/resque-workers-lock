@@ -1,5 +1,9 @@
 require 'resque/tasks'
 
+task "resque:setup" do
+  require_relative 'test/lock_worker'
+end
+
 require 'rake/testtask'
 require 'rdoc/task'
 
