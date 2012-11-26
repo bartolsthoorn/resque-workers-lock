@@ -11,13 +11,12 @@ Gem::Specification.new do |s|
   s.files             = %w( README.md Rakefile LICENSE )
   s.files            += Dir.glob("lib/**/*")
   s.files            += Dir.glob("test/**/*")
-  
+
   s.add_dependency "resque"
-  s.add_development_dependency "turn"
   s.add_development_dependency "rake"
-  
+
   s.description       = <<desc
-A Resque plugin. Two or more jobs with the same lock cannot be processed simultaneously by multiple workers. 
+A Resque plugin. Two or more jobs with the same lock cannot be processed simultaneously by multiple workers.
 When this situation occurs the second job gets pushed back to the queue.
 desc
 end
