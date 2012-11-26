@@ -1,38 +1,24 @@
 require 'test/unit'
 require 'resque/plugins/workers/lock'
-require_relative 'lock_worker'
+require 'tempfile'
 
 class LockTest < Test::Unit::TestCase
-  class SimilarJob
-    extend Resque::Plugins::Workers::Lock
-    @queue = :lock_test
-
-    def self.perform
-      raise "Woah woah! How did this happen?"
-    end
-  end
-
   class UniqueJob
     extend Resque::Plugins::Workers::Lock
     @queue = :lock_test
 
-    def self.lock_enqueue(id)
-      return id.to_s+"e"
+    def self.lock_workers(*)
+      self.name
     end
 
-    def self.lock_workers(id)
-      return id.to_s+"w"
+    def self.perform params
+      File.open(params['output_file'], 'a') do |output_file|
+        output_file.puts params['job']
+        output_file.flush
+        sleep 1
+        output_file.puts params['job']
+      end
     end
-
-    def self.perform(id)
-      raise "Woah woah! How did this happen?"
-    end
-  end
-
-  def setup
-    Resque.redis.del('queue:lock_test')
-    Resque.redis.del(SimilarJob.lock_workers)
-    Resque.redis.del(SimilarJob.lock_enqueue)
   end
 
   def test_lint
@@ -41,53 +27,78 @@ class LockTest < Test::Unit::TestCase
     end
   end
 
-  def test_enqueue
-    3.times { Resque.enqueue(SimilarJob) }
+  def test_workers_dont_work_simultaneously
+    assert_locking_works_with jobs: 2, workers: 2
+  end
 
-    assert_equal "LockTest::SimilarJob-[]", SimilarJob.lock_workers
-    assert_equal "LockTest::SimilarJob-[]", SimilarJob.lock_enqueue
-    assert_equal 1, Resque.redis.llen('queue:lock_test')
+  private
 
-    3.times do |i|
-      Resque.enqueue(UniqueJob, i+100)
-      assert_equal i.to_s+"e", UniqueJob.lock_enqueue(i)
-      assert_equal i.to_s+"w", UniqueJob.lock_workers(i)
+  def assert_locking_works_with options
+    jobs = (1..options[:jobs]).map{|job| "Job #{job}" }
+    output_file = Tempfile.new 'output_file'
+
+    jobs.each do |job|
+      Resque.enqueue UniqueJob, job: job, output_file: output_file.path
     end
 
-    assert_equal 4, Resque.redis.llen('queue:lock_test')
+    process_jobs workers: options[:workers], timeout: 10
 
-    # Test for complete queue wipe
-    Resque.remove_queue(:lock_test)
-
-    Resque.enqueue(SimilarJob)
-    assert_equal 1, Resque.redis.llen('queue:lock_test')
+    lines = File.readlines(output_file).map(&:chomp)
+    lines.each_slice(2) do |a,b|
+      assert_equal a,b, "#{a} was interrupted by #{b}"
+    end
+  ensure
+    output_file.close
   end
 
-  def test_zcleanup
-    Resque.remove_queue(:lock_test)
-
-    Resque.redis.keys('enqueuelock:*').collect { |x| Resque.redis.del(x) }
-    Resque.redis.keys('workerslock:*').collect { |x| Resque.redis.del(x) }
-
-    assert_equal 0, Resque.redis.llen('queue:lock_test')
+  def process_jobs options
+    with_workers options[:workers] do
+      wait_until(options[:timeout]) do
+         no_busy_workers && no_queued_jobs
+      end
+    end
   end
 
-  # To test this, make sure to run `TERM_CHILD=1 COUNT=2 VVERBOSE=1 QUEUES=* rake resque:work`
-  def test_lock
-    2.times { Resque.enqueue(SimilarSleepJob, 'writing_and_sleeping') }
-    
-    # After 3 seconds only 1 job had the change of running
-    sleep(3)
-    file = File.open('test/test.txt', 'rb')
-    contents = file.read
-    file.close
-    assert_equal '1', contents
-    
-    # After 12 seconds the 2 jobs should have been processed (not at the same time because of the lock)
-    sleep(12)
-    file = File.open('test/test.txt', 'rb')
-    contents = file.read
-    file.close
-    assert_equal '11', contents
+  def with_workers n
+    pids = []
+    n.times do
+      if pid = fork
+        pids << pid
+      else
+        pids = [] # Don't kill from child's ensure
+        worker = Resque::Worker.new('*')
+        worker.reconnect
+        worker.work(0.5)
+        exit!
+      end
+    end
+
+    yield
+
+  ensure
+    pids.each do |pid|
+      Process.kill("QUIT", pid)
+    end
+
+    pids.each do |pid|
+      Process.waitpid(pid)
+    end
+  end
+
+  def no_busy_workers
+    Resque::Worker.working.size == 0
+  end
+
+  def no_queued_jobs
+    Resque.redis.llen("queue:lock_test") == 0
+  end
+
+  def wait_until(timeout)
+    timeout.times do
+      return if yield
+      sleep 1
+    end
+
+    raise "Timout occured"
   end
 end
