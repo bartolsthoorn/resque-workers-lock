@@ -71,9 +71,43 @@ class LockTest < Test::Unit::TestCase
     assert_equal 0, Resque.redis.llen('queue:lock_test')
   end
 
+  # Sleep job, for testing that two workers are not processing two jobs with
+  # the same lock.
+  class SimilarSleepJob
+    extend Resque::Plugins::Workers::Lock
+    @queue = :lock_test_workers
+
+    def self.lock_enqueue(id)
+      false
+    end
+
+    def self.lock_workers(id)
+      return id.to_s
+    end
+
+    def self.perform(id)
+      File.open('test/test.txt', 'a') {|f| f.write('1') }
+      sleep(5)
+    end
+  end
+
+  # To test this, make sure to run `TERM_CHILD=1 COUNT=2 VVERBOSE=1 QUEUES=* rake resque:work`
   def test_lock
-    fail "This is the only important test"
-    # TODO: test that two workers are not processing two jobs with same locks
-    # This is pretty hard to do, contributors are welcome!
+    2.times { Resque.enqueue(SimilarSleepJob, 'writing_and_sleeping') }
+    SimilarSleepJob.perform('abc')
+    
+    # After 3 seconds only 1 job had the change of running
+    sleep(3)
+    file = File.open('test/test.txt', 'rb')
+    contents = file.read
+    file.close
+    assert_equal '1', contents
+    
+    # After 12 seconds the 2 jobs should have been processed (not at the same time because of the lock)
+    sleep(12)
+    file = File.open('test/test.txt', 'rb')
+    contents = file.read
+    file.close
+    assert_equal '11', contents
   end
 end

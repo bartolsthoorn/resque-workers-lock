@@ -1,3 +1,5 @@
+require 'resque/tasks'
+
 require 'rake/testtask'
 require 'rdoc/task'
 
