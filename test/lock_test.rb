@@ -1,24 +1,38 @@
 require 'test/unit'
-require 'resque/plugins/workers/lock'
+require File.expand_path('../../lib/resque/plugins/workers/lock', __FILE__)
 require 'tempfile'
+require 'timeout'
 
 class LockTest < Test::Unit::TestCase
   class UniqueJob
     extend Resque::Plugins::Workers::Lock
     @queue = :lock_test
 
+    def self.worker_lock_timeout(*)
+      5
+    end
+
     def self.lock_workers(*)
       self.name
     end
 
-    def self.perform params
-      File.open(params['output_file'], 'a') do |output_file|
-        output_file.puts params['job']
-        output_file.flush
-        sleep 1
-        output_file.puts params['job']
+    def self.lock_enqueue(*) false end
+
+    def self.append_output filename, string
+      File.open(filename, 'a') do |output_file|
+        output_file.puts string
       end
     end
+
+    def self.perform params
+      append_output params['output_file'], "starting #{params['job']}"
+      sleep(params['sleep'] || 1)
+      append_output params['output_file'], "finished #{params['job']}"
+    end
+  end
+
+  def setup
+    Resque.redis.del(UniqueJob.get_lock_workers)
   end
 
   def test_lint
@@ -31,7 +45,48 @@ class LockTest < Test::Unit::TestCase
     assert_locking_works_with jobs: 2, workers: 2
   end
 
+  def test_worker_locks_timeout
+    output_file = Tempfile.new 'output_file'
+
+    Resque.enqueue UniqueJob, job: 'interrupted-job', output_file: output_file.path, sleep: 1000
+
+    worker_pid = start_worker
+    wait_until(10){ lock_has_been_acquired }
+    kill_worker(worker_pid)
+
+    Resque.enqueue UniqueJob, job: 'completing-job', output_file: output_file.path, sleep: 0
+    process_jobs workers: 1, timeout: UniqueJob.worker_lock_timeout + 2
+
+    lines = File.readlines(output_file).map(&:chomp)
+    assert_equal ['starting interrupted-job', 'starting completing-job', 'finished completing-job'], lines
+  end
+
   private
+
+  def lock_has_been_acquired
+    Resque.redis.exists(UniqueJob.get_lock_workers)
+  end
+
+  def kill_worker(worker_pid)
+    Process.kill("TERM", worker_pid)
+    Process.waitpid(worker_pid)
+  end
+
+  def start_worker
+    fork.tap do |pid|
+      if !pid
+        worker = Resque::Worker.new('*')
+        worker.term_child = true
+        worker.reconnect
+        worker.work(0.5)
+        exit!
+      end
+    end
+  end
+
+  def assert_worker_lock_exists(job_class, *args)
+    assert Resque.redis.exists(job_class.get_lock_workers(*args), "lock does not exist")
+  end
 
   def assert_locking_works_with options
     jobs = (1..options[:jobs]).map{|job| "Job #{job}" }
@@ -45,10 +100,8 @@ class LockTest < Test::Unit::TestCase
 
     lines = File.readlines(output_file).map(&:chomp)
     lines.each_slice(2) do |a,b|
-      assert_equal a,b, "#{a} was interrupted by #{b}"
+      assert_equal a.split.last,b.split.last, "#{a} was interrupted by #{b}"
     end
-  ensure
-    output_file.close
   end
 
   def process_jobs options
@@ -67,6 +120,7 @@ class LockTest < Test::Unit::TestCase
       else
         pids = [] # Don't kill from child's ensure
         worker = Resque::Worker.new('*')
+        worker.term_child = true
         worker.reconnect
         worker.work(0.5)
         exit!
@@ -94,11 +148,11 @@ class LockTest < Test::Unit::TestCase
   end
 
   def wait_until(timeout)
-    timeout.times do
-      return if yield
-      sleep 1
+    Timeout::timeout(timeout) do
+      loop do
+        return if yield
+        sleep 1
+      end
     end
-
-    raise "Timout occured"
   end
 end

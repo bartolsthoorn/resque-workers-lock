@@ -14,6 +14,13 @@ module Resque
     module Workers
       module Lock
 
+        # Override in your job to control the worker lock experiation time. This
+        # is the time in seconds that the lock should be considered valid. The
+        # default is one hour (3600 seconds).
+        def worker_lock_timeout(*)
+          3600
+        end
+
         # Override in your job to control the queue lock key
         def lock_enqueue(*args)
           "#{name}-#{args.to_s}"
@@ -52,8 +59,9 @@ module Resque
         # If it raises Resque::Job::DontPerform, the job is aborted.
         def before_perform_lock(*args)
           if lock_workers(*args)
-            nx = Resque.redis.setnx(get_lock_workers(*args), true)
-            if nx == false
+            if Resque.redis.setnx(get_lock_workers(*args), true)
+              Resque.redis.expire(get_lock_workers(*args), worker_lock_timeout(*args))
+            else
               sleep(requeue_perform_delay)
               Resque.redis.del(get_lock_enqueue(*args))
               Resque.enqueue(self, *args)
