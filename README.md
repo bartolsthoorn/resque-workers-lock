@@ -12,32 +12,40 @@ If resque jobs have the same lock applied this means that those jobs cannot be p
 By default the lock is the instance name + arguments (just like the classic resque-lock). Override this lock to lock on specific arguments.
 
 ## How does it differ from resque-lock?
-Resque-lock will not let you queue jobs when you locked them. Resque-workers-lock locks on a workers-level and will requeue the locked jobs. When the enqueue_lock is set to false, this plugin will not prevent you to queue jobs. If a worker takes on a job that is already being processed by another worker it will put the job back up in the queue! Also, this plugin will still offer you the ability to lock at enqueue-level just like resque-lock does (see example).
+Resque-lock will not let you queue jobs when you locked them. Resque-workers-lock locks on a workers-level and will requeue the locked jobs. When the `enqueue_lock` is set to false, this plugin will not prevent you to queue jobs. If a worker takes on a job that is already being processed by another worker it will put the job back up in the queue! Also, this plugin will still offer you the ability to lock at enqueue-level just like resque-lock does (see example).
 
 ## Example
 This example shows how you can use the workers-lock to prevent two jobs with the same domain to be processed simultaneously.
+
 ``` ruby
 require 'resque/plugins/workers/lock'
 
 class Parser
   extend Resque::Plugins::Workers::Lock
 
-	# Lock method has the same arguments as the self.perform
-	def self.lock_workers(domain, arg2, arg3)
-		return domain
-	end
-	
-	# Turn off standard resque-lock functionality
-	def self.lock_enqueue(domain, arg2, arg3)
-		false
-	end
+  # Lock method has the same arguments as the self.perform
+  def self.lock_workers(domain, arg2, arg3)
+    return domain
+  end
 
-	# Perform method with some arguments
+  # This is the time in seconds that the worker lock should be considered valid.
+  # The default is one hour (3600 seconds).
+  def self.worker_lock_timeout(domain, arg2, arg3)
+    3600
+  end
+
+  # Turn off standard resque-lock functionality
+  def self.lock_enqueue(domain, arg2, arg3)
+    false
+  end
+
+  # Perform method with some arguments
   def self.perform(domain, arg2, arg3)
     # do the work
   end
 end
 ```
+
 In this example `domain` is used to specify certain types of jobs that are not allowed to run at the same time. For example: if you create three jobs with the domain argument google.com, google.com and yahoo.com, the two google.com jobs will never run at the same time.
 
 ## One queue
@@ -49,11 +57,11 @@ When a job is requeue'ed there is a small delay (1 second by default) before the
 To overwrite this delay in your class:
 ``` ruby
 def self.requeue_perform_delay
-	5.0
+  5.0
 end
 ```
 
 Please note that setting this value to 5 seconds will keep the worker idle for 5 seconds when the job is locked.
 
-## Possibilities to prevent the loop 
+## Possibilities to prevent the loop
 Do a delayed resque (re)queue. However, this will have approximately the same results and will require a large extra chunk of code and rake configurations.
