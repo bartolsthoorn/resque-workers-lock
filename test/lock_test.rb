@@ -16,8 +16,6 @@ class LockTest < Test::Unit::TestCase
       self.name
     end
 
-    def self.lock_enqueue(*) false end
-
     def self.append_output filename, string
       File.open(filename, 'a') do |output_file|
         output_file.puts string
