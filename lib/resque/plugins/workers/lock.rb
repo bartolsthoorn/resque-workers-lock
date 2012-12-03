@@ -35,7 +35,7 @@ module Resque
 
         # Called with the job args before perform.
         # If it raises Resque::Job::DontPerform, the job is aborted.
-        def before_perform_lock(*args)
+        def before_perform_workers_lock(*args)
           if lock_workers(*args)
             if Resque.redis.setnx(get_lock_workers(*args), true)
               Resque.redis.expire(get_lock_workers(*args), worker_lock_timeout(*args))
@@ -47,20 +47,20 @@ module Resque
           end
         end
 
-        def clear_lock(*args)
+        def clear_workers_lock(*args)
           Resque.redis.del(get_lock_workers(*args))
         end
 
-        def around_perform_lock(*args)
+        def around_perform_workers_lock(*args)
           yield
         ensure
           # Clear the lock. (even with errors)
-          clear_lock(*args)
+          clear_workers_lock(*args)
         end
 
-        def on_failure_lock(exception, *args)
+        def on_failure_workers_lock(exception, *args)
           # Clear the lock on DirtyExit
-          clear_lock(*args)
+          clear_workers_lock(*args)
         end
 
       end
