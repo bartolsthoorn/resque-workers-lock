@@ -6,7 +6,7 @@ require 'timeout'
 class LockTest < Test::Unit::TestCase
   class UniqueJob
     extend Resque::Plugins::Workers::Lock
-    @queue = :lock_test
+    def queue; :lock_test end
 
     def self.worker_lock_timeout(*)
       5
