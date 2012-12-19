@@ -3,31 +3,10 @@ require File.expand_path('../../lib/resque/plugins/workers/lock', __FILE__)
 require 'tempfile'
 require 'timeout'
 
+require_relative 'unique_job'
+
 class LockTest < Test::Unit::TestCase
-  class UniqueJob
-    extend Resque::Plugins::Workers::Lock
-    def queue; :lock_test end
-
-    def self.worker_lock_timeout(*)
-      5
-    end
-
-    def self.lock_workers(*)
-      self.name
-    end
-
-    def self.append_output filename, string
-      File.open(filename, 'a') do |output_file|
-        output_file.puts string
-      end
-    end
-
-    def self.perform params
-      append_output params['output_file'], "starting #{params['job']}"
-      sleep(params['sleep'] || 1)
-      append_output params['output_file'], "finished #{params['job']}"
-    end
-  end
+  
 
   def setup
     Resque.redis.del(UniqueJob.get_lock_workers)

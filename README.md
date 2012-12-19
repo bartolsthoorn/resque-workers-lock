@@ -60,3 +60,26 @@ Please note that setting this value to 5 seconds will keep the worker idle for 5
 
 ## Possibilities to prevent the loop
 Do a delayed resque (re)queue. However, this will have approximately the same results and will require a large extra chunk of code and rake configurations.
+
+## Run workers for the test
+To run the tests using `rake test` properly, make sure there are a few workers running:
+```
+$ redis-server
+$ VVERBOSE=1 COUNT=4 QUEUE=* rake resque:work
+```
+
+```
+➜  resque-workers-lock git:(master) ✗ rake test
+Run options: 
+
+# Running tests:
+
+...
+
+Finished tests in 10.426519s, 0.2877 tests/s, 0.3836 assertions/s.
+
+3 tests, 4 assertions, 0 failures, 0 errors, 0 skips
+```
+
+## Authors/Contributors
+[nicholaides](https://github.com/nicholaides)

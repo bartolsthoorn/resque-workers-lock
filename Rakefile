@@ -9,3 +9,7 @@ Rake::TestTask.new do |t|
   t.pattern = 'test/**/*_test.rb'
   t.verbose = false
 end
+
+task "resque:setup" do
+  require_relative "test/unique_job"
+end
