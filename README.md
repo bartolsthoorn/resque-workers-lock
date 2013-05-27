@@ -1,11 +1,11 @@
 # Resque Workers Lock
-This is a [resque](https://github.com/defunkt/resque) plugin inspired by [resque-lock](https://github.com/defunkt/resque-lock) and requires Resque 1.7.0.
+This is a [resque](https://github.com/defunkt/resque) plugin inspired by [resque-lock](https://github.com/defunkt/resque-lock).
 
 ``` ruby
 gem 'resque-workers-lock'
 ```
 
-**Important notice** - As of version 1.7, Resque Workers Lock no longer includes a enqueue lock but focusses solely on a workers lock. If you're also looking for enqueue lock functionality, just add [resque-lock](https://github.com/defunkt/resque-lock) or another plugin in the mix.
+**Important notice** - As of this gem version 1.7, Resque Workers Lock no longer includes a enqueue lock but focusses solely on a workers lock. If you're also looking for enqueue lock functionality, just add [resque-lock](https://github.com/defunkt/resque-lock) or another plugin in the mix.
 
 ## What does it do?
 If resque jobs have the same lock applied this means that those jobs cannot be processed simultaneously by two or more workers. When this situation occurs the second job gets pushed back to the queue.
