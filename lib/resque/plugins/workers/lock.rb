@@ -19,13 +19,21 @@ module Resque
           3600
         end
 
-        # Override in your job to control the workers lock key.
+        # Override in your job to control the workers lock key(s).
         def lock_workers(*args)
           "#{name}-#{args.to_s}"
         end
 
         def get_lock_workers(*args)
-          "workerslock:"+lock_workers(*args).to_s
+          lock_result = lock_workers(*args)
+
+          if lock_result.kind_of?(Array)
+            lock_result.map do |lock|
+              "workerslock:#{lock}"
+            end
+          else
+            ["workerslock:#{lock_result}"]
+          end
         end
 
         # Override in your job to change the perform requeue delay
@@ -37,8 +45,12 @@ module Resque
         # If it raises Resque::Job::DontPerform, the job is aborted.
         def before_perform_workers_lock(*args)
           if lock_workers(*args)
-            if Resque.redis.setnx(get_lock_workers(*args), true)
-              Resque.redis.expire(get_lock_workers(*args), worker_lock_timeout(*args))
+            lock_result = get_lock_workers(*args)
+
+            if Resque.redis.msetnx lock_result.zip([true]*lock_result.size).flatten
+              lock_result.each do |lock|
+                Resque.redis.expire(lock, worker_lock_timeout(*args))
+              end
             else
               sleep(requeue_perform_delay)
               Resque.enqueue(self, *args)
@@ -48,7 +60,11 @@ module Resque
         end
 
         def clear_workers_lock(*args)
-          Resque.redis.del(get_lock_workers(*args))
+          lock_result = get_lock_workers(*args)
+
+          lock_result.each do |lock|
+            Resque.redis.del(lock)
+          end
         end
 
         def around_perform_workers_lock(*args)

@@ -5,13 +5,14 @@ This is a [resque](https://github.com/defunkt/resque) plugin inspired by [resque
 gem 'resque-workers-lock'
 ```
 
-**Important notice** - As of this gem version 1.7, Resque Workers Lock no longer includes a enqueue lock but focusses solely on a workers lock. If you're also looking for enqueue lock functionality, just add [resque-lock](https://github.com/defunkt/resque-lock) or another plugin in the mix.
+**Important notice** - As of this gem version 1.7, Resque Workers Lock no longer includes an enqueue lock but focusses solely on a workers lock. If you're also looking for enqueue lock functionality, just add [resque-lock](https://github.com/defunkt/resque-lock) or another plugin in the mix.
 
 ## What does it do?
-If resque jobs have the same lock applied this means that those jobs cannot be processed simultaneously by two or more workers. When this situation occurs the second job gets pushed back to the queue.
+If resque jobs have the same lock(s) applied this means that those jobs cannot be processed simultaneously by two or more workers. When this situation occurs the second job gets pushed back to the queue.
 
 ## What is the default lock?
 By default the lock is the instance name + arguments (just like the classic resque-lock). Override this lock to lock on specific arguments.
+You can specify only one lock or an array of locks.
 
 ## How does it differ from resque-lock?
 Resque-lock will not let you enqueue jobs when you locked them. Resque-workers-lock locks on a workers-level and will requeue the locked jobs. If a worker takes on a job that is already being processed by another worker it will put the job back up in the queue!
