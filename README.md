@@ -12,7 +12,7 @@ If resque jobs have the same lock(s) applied this means that those jobs cannot b
 
 ## What is the default lock?
 By default the lock is the instance name + arguments (just like the classic resque-lock). Override this lock to lock on specific arguments.
-You can specify only one lock or an array of locks.
+You can specify only one lock or an array of locks. A job with an array of locks will only be processed when all the (individual) locks are not being processed by workers.
 
 ## How does it differ from resque-lock?
 Resque-lock will not let you enqueue jobs when you locked them. Resque-workers-lock locks on a workers-level and will requeue the locked jobs. If a worker takes on a job that is already being processed by another worker it will put the job back up in the queue!
@@ -67,3 +67,4 @@ Do a delayed resque (re)queue. However, this will have approximately the same re
 ## Authors/Contributors
 [nicholaides](https://github.com/nicholaides)
 [jgarber](https://github.com/jgarber)
+[mohawke](https://github.com/mohawke)
