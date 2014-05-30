@@ -8,8 +8,8 @@ class UniqueJobMKey
     5
   end
 
-  def self.lock_workers(*)
-    [self.name + '1', self.name + '2']
+  def self.lock_workers(*args)
+    [self.name + '1', "#{self.name}#{args.to_s}"]
   end
 
   def self.append_output filename, string

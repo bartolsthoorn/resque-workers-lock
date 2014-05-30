@@ -9,9 +9,8 @@ class LockMKeyTest < Test::Unit::TestCase
 
 
   def setup
-    lock_result = UniqueJobMKey.get_lock_workers
-    lock_result.each do |lock|
-      Resque.redis.del(lock)
+    Resque.redis.keys('UniqueJobMkey*').each do |key|
+      Resque.redis.del key
     end
   end
 
@@ -44,10 +43,7 @@ class LockMKeyTest < Test::Unit::TestCase
   private
 
   def lock_has_been_acquired
-    lock_result = UniqueJobMKey.get_lock_workers
-    lock_result.all? do |lock|
-      Resque.redis.exists(lock)
-    end
+    Resque.redis.exists(UniqueJobMKey.get_lock_workers.first)
   end
 
   def kill_worker(worker_pid)
@@ -68,10 +64,7 @@ class LockMKeyTest < Test::Unit::TestCase
   end
 
   def assert_worker_lock_exists(job_class, *args)
-    lock_result = UniqueJobMKey.get_lock_workers
-    lock_result.each do |lock|
-      assert Resque.redis.exists(lock, "lock does not exist")
-    end
+    assert Resque.redis.exists(job_class.get_lock_workers(*args).first, "lock does not exist")
   end
 
   def assert_locking_works_with options
