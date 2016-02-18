@@ -41,6 +41,18 @@ module Resque
           1.0
         end
 
+        # Override in your job to change the way how job is reenqueued
+        def reenqueue
+          if defined? Resque::Scheduler
+            # schedule a job in requeue_perform_delay seconds
+            Resque.enqueue_in(requeue_perform_delay, self, *args)
+          else
+            sleep(requeue_perform_delay)
+            Resque.enqueue(self, *args)
+          end
+          raise Resque::Job::DontPerform
+        end
+
         # Called with the job args before perform.
         # If it raises Resque::Job::DontPerform, the job is aborted.
         def before_perform_workers_lock(*args)
@@ -52,9 +64,7 @@ module Resque
                 Resque.redis.expire(lock, worker_lock_timeout(*args))
               end
             else
-              sleep(requeue_perform_delay)
-              Resque.enqueue(self, *args)
-              raise Resque::Job::DontPerform
+              reenqueue
             end
           end
         end
