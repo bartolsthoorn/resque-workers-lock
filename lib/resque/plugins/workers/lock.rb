@@ -42,7 +42,7 @@ module Resque
         end
 
         # Override in your job to change the way how job is reenqueued
-        def reenqueue
+        def reenqueue(*args)
           if defined? Resque::Scheduler
             # schedule a job in requeue_perform_delay seconds
             Resque.enqueue_in(requeue_perform_delay, self, *args)
@@ -64,7 +64,7 @@ module Resque
                 Resque.redis.expire(lock, worker_lock_timeout(*args))
               end
             else
-              reenqueue
+              reenqueue(*args)
             end
           end
         end
