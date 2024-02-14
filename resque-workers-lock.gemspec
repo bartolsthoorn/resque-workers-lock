@@ -1,6 +1,8 @@
+require File.expand_path('../lib/resque-workers-lock/version', __FILE__)
+
 Gem::Specification.new do |s|
   s.name              = "resque-workers-lock"
-  s.version           = "3.0.0"
+  s.version           = Resque::Plugins::Workers::Lock::VERSION
   s.date              = Time.now.strftime('%Y-%m-%d')
   s.summary           = "Resque plugin, prevent specific jobs to be processed simultaneously by multiple workers."
   s.homepage          = "http://github.com/bartolsthoorn/resque-workers-lock"
@@ -15,6 +17,7 @@ Gem::Specification.new do |s|
 
   s.add_dependency "resque"
   s.add_development_dependency "rake"
+  s.add_development_dependency "pry"
 
   s.description       = <<desc
 A Resque plugin. Two or more jobs with the same lock cannot be processed simultaneously by multiple workers.
