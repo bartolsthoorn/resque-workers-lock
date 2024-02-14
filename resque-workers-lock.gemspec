@@ -9,7 +9,6 @@ Gem::Specification.new do |s|
   s.email             = "bartolsthoorn@gmail.com"
   s.authors           = ["Bart Olsthoorn", "Mike Nicholaides", "Jason Garber", "Tijs Planckaert", "Anton Bogdanovich", "Arian Faurtosh"]
   s.licenses          = ["MIT"]
-  s.has_rdoc          = false
 
   s.files             = %w( README.md Rakefile LICENSE )
   s.files            += Dir.glob("lib/**/*")
