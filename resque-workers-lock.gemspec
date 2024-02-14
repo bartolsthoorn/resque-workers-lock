@@ -1,11 +1,11 @@
 Gem::Specification.new do |s|
   s.name              = "resque-workers-lock"
-  s.version           = "2.0.1"
+  s.version           = "3.0.0"
   s.date              = Time.now.strftime('%Y-%m-%d')
   s.summary           = "Resque plugin, prevent specific jobs to be processed simultaneously by multiple workers."
   s.homepage          = "http://github.com/bartolsthoorn/resque-workers-lock"
   s.email             = "bartolsthoorn@gmail.com"
-  s.authors           = ["Bart Olsthoorn", "Mike Nicholaides", "Jason Garber", "Tijs Planckaert", "Anton Bogdanovich"]
+  s.authors           = ["Bart Olsthoorn", "Mike Nicholaides", "Jason Garber", "Tijs Planckaert", "Anton Bogdanovich", "Arian Faurtosh"]
   s.licenses          = ["MIT"]
   s.has_rdoc          = false
 
