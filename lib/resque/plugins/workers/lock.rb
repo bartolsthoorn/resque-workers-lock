@@ -59,7 +59,7 @@ module Resque
           if lock_workers(*args)
             lock_result = get_lock_workers(*args)
 
-            if Resque.redis.msetnx lock_result.zip([true]*lock_result.size).flatten
+            if Resque.redis.msetnx lock_result.zip(['true']*lock_result.size).flatten
               lock_result.each do |lock|
                 Resque.redis.expire(lock, worker_lock_timeout(*args))
               end
